@@ -1,0 +1,15 @@
+cat <<EOF > .gitignore
+__pycache__/
+catboost_info/
+venv/
+.venv/
+*.pkl
+*.xlsx
+advanced_genomic_data.csv
+cosmic.csv
+FINAL_COLON_CANCER_DATASET.csv
+ML_READY_DATA.csv
+organized_clinical_data.csv
+organized_clinical_data_v2.csv
+new_patients.csv
+EOF
