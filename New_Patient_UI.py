@@ -204,7 +204,15 @@ def calculate_severity(ml_row, probability):
     row_series = pd.Series(ml_row)
     base_level, final_level, upgrades, downgrades = \
         engine.calculate_severity(row_series, probability)
+
+    print(f"[DEBUG] calculate_severity: base={base_level}, final={final_level}, upgrades={upgrades}, downgrades={downgrades}")
+
+    # Ensure final_level is valid
+    if final_level not in ["Mild", "Moderate", "High", "Critical"]:
+        final_level = "Moderate"  # Safe default
+
     treatment = engine.recommend_treatment(final_level)
+    print(f"[DEBUG] treatment returned: '{treatment}'")
 
     if upgrades:
         adjustment = f"Upgraded {base_level} → {final_level}: {', '.join(upgrades)}"
@@ -213,13 +221,15 @@ def calculate_severity(ml_row, probability):
     else:
         adjustment = f"No adjustment — stays at {base_level}"
 
-    return {
+    result_dict =  {
         "Cancer_Probability":       f"{probability * 100:.2f}%",
         "Base_Level":               base_level,
         "Severity_Level":           final_level,
         "Adjustment":               adjustment,
-        "Treatment_Recommendation": treatment,
+        "Treatment_Recommendation": treatment if treatment else "Consult oncology team",
     }
+    print(f"[DEBUG] result dict: {result_dict}")
+    return result_dict
 
 
 def save_patient(info, severity_result):
@@ -263,8 +273,8 @@ class PatientAssessmentUI(ctk.CTk):
         super().__init__()
 
         self.title("Colon Cancer Severity Assessment — Patient Intake")
-        self.geometry("1320x800")
-        self.minsize(1150, 720)
+        self.geometry("1500x900")
+        self.minsize(1300, 800)
         ctk.set_appearance_mode("light")
 
         self.model, self.scaler, self.features = load_model()
@@ -344,7 +354,7 @@ class PatientAssessmentUI(ctk.CTk):
     def _build_form_panel(self):
         # Outer shell
         self.form_frame = ctk.CTkFrame(self, fg_color=LIGHT_BG, corner_radius=0)
-        self.form_frame.grid(row=1, column=0, sticky="nsew", padx=(16, 8), pady=16)
+        self.form_frame.grid(row=1, column=0, sticky="nsew", padx=(16, 4), pady=16)
         self.form_frame.grid_rowconfigure(0, weight=0)
         self.form_frame.grid_rowconfigure(1, weight=1)
 
@@ -428,9 +438,9 @@ class PatientAssessmentUI(ctk.CTk):
         ROW += 1
         age_entry = ctk.CTkEntry(
             self.form_inner, textvariable=self._age_var,
-            placeholder_text="Enter patient age (e.g. 55)", width=INPUT_W, height=40,
-            font=ctk.CTkFont(size=13),
-            fg_color=INPUT_BG,
+            placeholder_text="Enter patient age (e.g. 55)", width=INPUT_W, height=44,
+            font=ctk.CTkFont(size=14),
+            fg_color="#E8EEF4",
         )
         input_row(ROW, age_entry)
         ROW += 1
@@ -447,10 +457,11 @@ class PatientAssessmentUI(ctk.CTk):
         grade_combo = ctk.CTkOptionMenu(
             self.form_inner, variable=self._grade_var,
             values=["G1", "G2", "G3", "G4", "Not Reported"],
-            width=INPUT_W, height=40,
-            font=ctk.CTkFont(size=13),
-            dropdown_font=ctk.CTkFont(size=12),
-            fg_color=INPUT_BG, button_color=CARD_BG, button_hover_color=INPUT_BORDER,
+            width=INPUT_W, height=44,
+            font=ctk.CTkFont(size=14),
+            dropdown_font=ctk.CTkFont(size=13),
+            fg_color="#2E9CAD", button_color="#1A6B8A", button_hover_color="#145670",
+            text_color=TEXT_LIGHT,
         )
         input_row(ROW, grade_combo, (2, 10))
         ROW += 1
@@ -461,10 +472,11 @@ class PatientAssessmentUI(ctk.CTk):
         meta_combo = ctk.CTkOptionMenu(
             self.form_inner, variable=self._metastasis_var,
             values=["Yes", "No", "Unknown"],
-            width=INPUT_W, height=40,
-            font=ctk.CTkFont(size=13),
-            dropdown_font=ctk.CTkFont(size=12),
-            fg_color=INPUT_BG, button_color=CARD_BG, button_hover_color=INPUT_BORDER,
+            width=INPUT_W, height=44,
+            font=ctk.CTkFont(size=14),
+            dropdown_font=ctk.CTkFont(size=13),
+            fg_color="#2E9CAD", button_color="#1A6B8A", button_hover_color="#145670",
+            text_color=TEXT_LIGHT,
         )
         input_row(ROW, meta_combo, (2, 10))
         ROW += 1
@@ -475,10 +487,11 @@ class PatientAssessmentUI(ctk.CTk):
         res_combo = ctk.CTkOptionMenu(
             self.form_inner, variable=self._residual_var,
             values=["R0", "R1", "R2", "Unknown"],
-            width=INPUT_W, height=40,
-            font=ctk.CTkFont(size=13),
-            dropdown_font=ctk.CTkFont(size=12),
-            fg_color=INPUT_BG, button_color=CARD_BG, button_hover_color=INPUT_BORDER,
+            width=INPUT_W, height=44,
+            font=ctk.CTkFont(size=14),
+            dropdown_font=ctk.CTkFont(size=13),
+            fg_color="#2E9CAD", button_color="#1A6B8A", button_hover_color="#145670",
+            text_color=TEXT_LIGHT,
         )
         input_row(ROW, res_combo, (2, 10))
         ROW += 1
@@ -489,10 +502,11 @@ class PatientAssessmentUI(ctk.CTk):
         class_combo = ctk.CTkOptionMenu(
             self.form_inner, variable=self._class_var,
             values=["Primary", "Recurrence", "Metastasis", "Synchronous primary", "Not Reported"],
-            width=INPUT_W, height=40,
-            font=ctk.CTkFont(size=13),
-            dropdown_font=ctk.CTkFont(size=12),
-            fg_color=INPUT_BG, button_color=CARD_BG, button_hover_color=INPUT_BORDER,
+            width=INPUT_W, height=44,
+            font=ctk.CTkFont(size=14),
+            dropdown_font=ctk.CTkFont(size=13),
+            fg_color="#2E9CAD", button_color="#1A6B8A", button_hover_color="#145670",
+            text_color=TEXT_LIGHT,
         )
         input_row(ROW, class_combo, (2, 10))
         ROW += 1
@@ -503,10 +517,11 @@ class PatientAssessmentUI(ctk.CTk):
         prior_combo = ctk.CTkOptionMenu(
             self.form_inner, variable=self._prior_var,
             values=["Yes", "No", "Unknown"],
-            width=INPUT_W, height=40,
-            font=ctk.CTkFont(size=13),
-            dropdown_font=ctk.CTkFont(size=12),
-            fg_color=INPUT_BG, button_color=CARD_BG, button_hover_color=INPUT_BORDER,
+            width=INPUT_W, height=44,
+            font=ctk.CTkFont(size=14),
+            dropdown_font=ctk.CTkFont(size=13),
+            fg_color="#2E9CAD", button_color="#1A6B8A", button_hover_color="#145670",
+            text_color=TEXT_LIGHT,
         )
         input_row(ROW, prior_combo, (2, 10))
         ROW += 1
@@ -517,10 +532,11 @@ class PatientAssessmentUI(ctk.CTk):
         fam_combo = ctk.CTkOptionMenu(
             self.form_inner, variable=self._family_var,
             values=["Yes", "No", "Unknown"],
-            width=INPUT_W, height=40,
-            font=ctk.CTkFont(size=13),
-            dropdown_font=ctk.CTkFont(size=12),
-            fg_color=INPUT_BG, button_color=CARD_BG, button_hover_color=INPUT_BORDER,
+            width=INPUT_W, height=44,
+            font=ctk.CTkFont(size=14),
+            dropdown_font=ctk.CTkFont(size=13),
+            fg_color="#2E9CAD", button_color="#1A6B8A", button_hover_color="#145670",
+            text_color=TEXT_LIGHT,
         )
         input_row(ROW, fam_combo, (2, 10))
         ROW += 1
@@ -537,10 +553,11 @@ class PatientAssessmentUI(ctk.CTk):
                 "Reformed Smoker (> 15 years ago)",
                 "Unknown",
             ],
-            width=INPUT_W, height=40,
-            font=ctk.CTkFont(size=13),
-            dropdown_font=ctk.CTkFont(size=12),
-            fg_color=INPUT_BG, button_color=CARD_BG, button_hover_color=INPUT_BORDER,
+            width=INPUT_W, height=44,
+            font=ctk.CTkFont(size=14),
+            dropdown_font=ctk.CTkFont(size=13),
+            fg_color="#2E9CAD", button_color="#1A6B8A", button_hover_color="#145670",
+            text_color=TEXT_LIGHT,
         )
         input_row(ROW, smoke_combo, (2, 10))
         ROW += 1
@@ -550,9 +567,9 @@ class PatientAssessmentUI(ctk.CTk):
         ROW += 1
         followup_entry = ctk.CTkEntry(
             self.form_inner, textvariable=self._followup_var,
-            placeholder_text="Enter days since last follow-up (e.g. 365)", width=INPUT_W, height=40,
-            font=ctk.CTkFont(size=13),
-            fg_color=INPUT_BG,
+            placeholder_text="Enter days since last follow-up (e.g. 365)", width=INPUT_W, height=44,
+            font=ctk.CTkFont(size=14),
+            fg_color="#E8EEF4",
         )
         input_row(ROW, followup_entry, (2, 10))
         ROW += 1
@@ -563,10 +580,11 @@ class PatientAssessmentUI(ctk.CTk):
     def _add_combo(self, row, var, values, width):
         combo = ctk.CTkOptionMenu(
             self.form_inner, variable=var, values=values,
-            width=width, height=40,
-            font=ctk.CTkFont(size=13),
-            dropdown_font=ctk.CTkFont(size=12),
-            fg_color=INPUT_BG, button_color=CARD_BG, button_hover_color=INPUT_BORDER,
+            width=width, height=44,
+            font=ctk.CTkFont(size=14),
+            dropdown_font=ctk.CTkFont(size=13),
+            fg_color="#2E9CAD", button_color="#1A6B8A", button_hover_color="#145670",
+            text_color=TEXT_LIGHT,
         )
         combo.grid(row=row, column=0, columnspan=2, sticky="w", pady=(2, 10), padx=(0, 8))
 
@@ -620,7 +638,7 @@ class PatientAssessmentUI(ctk.CTk):
 
     def _build_results_panel(self):
         self.results_frame = ctk.CTkFrame(self, fg_color=RESULT_BG, corner_radius=12)
-        self.results_frame.grid(row=1, column=1, sticky="nsew", padx=(8, 16), pady=16)
+        self.results_frame.grid(row=1, column=1, sticky="nsew", padx=(4, 16), pady=16)
         self.results_frame.grid_rowconfigure(0, weight=0)
         self.results_frame.grid_rowconfigure(1, weight=1)
         self.results_frame.grid_columnconfigure(0, weight=1)
@@ -681,12 +699,12 @@ class PatientAssessmentUI(ctk.CTk):
 
         ctk.CTkLabel(
             prob_card, text="Cancer Probability",
-            font=ctk.CTkFont(size=11), text_color="#7A8FA8",
+            font=ctk.CTkFont(size=12), text_color="#7A8FA8",
         ).pack(anchor="w", padx=18, pady=(14, 2))
 
         ctk.CTkLabel(
             prob_card, text=result["Cancer_Probability"],
-            font=ctk.CTkFont(size=40, weight="bold"),
+            font=ctk.CTkFont(size=44, weight="bold"),
             text_color=TEXT_LIGHT,
         ).pack(anchor="w", padx=18, pady=(0, 14))
 
@@ -696,18 +714,18 @@ class PatientAssessmentUI(ctk.CTk):
 
         ctk.CTkLabel(
             sev_card, text="Severity Level",
-            font=ctk.CTkFont(size=11), text_color="#7A8FA8",
+            font=ctk.CTkFont(size=12), text_color="#7A8FA8",
         ).pack(anchor="w", padx=18, pady=(14, 2))
 
         ctk.CTkLabel(
             sev_card, text=result["Severity_Level"],
-            font=ctk.CTkFont(size=26, weight="bold"),
+            font=ctk.CTkFont(size=28, weight="bold"),
             text_color=sev_color,
         ).pack(anchor="w", padx=18, pady=(0, 4))
 
         ctk.CTkLabel(
             sev_card, text=f"Base: {result['Base_Level']}",
-            font=ctk.CTkFont(size=11), text_color="#7A8FA8",
+            font=ctk.CTkFont(size=12), text_color="#7A8FA8",
         ).pack(anchor="w", padx=18, pady=(0, 14))
 
         # ── Adjustment card ───────────────────────────────────────────
@@ -715,30 +733,35 @@ class PatientAssessmentUI(ctk.CTk):
         adj_card.pack(fill="x", pady=(0, 10))
 
         ctk.CTkLabel(
-            adj_card, text="Clinical Adjustment",
-            font=ctk.CTkFont(size=11), text_color="#7A8FA8",
+            adj_card, text="📋 Clinical Adjustment",
+            font=ctk.CTkFont(size=12), text_color="#7A8FA8",
         ).pack(anchor="w", padx=18, pady=(14, 4))
 
         ctk.CTkLabel(
             adj_card, text=result["Adjustment"],
-            font=ctk.CTkFont(size=12), text_color=TEXT_LIGHT,
-            wraplength=300, justify="left",
+            font=ctk.CTkFont(size=13), text_color="#A8C4D4",
+            wraplength=340, justify="left",
         ).pack(anchor="w", padx=18, pady=(0, 14))
 
         # ── Treatment card ─────────────────────────────────────────────
-        treat_card = ctk.CTkFrame(self.results_content, fg_color="#253548", corner_radius=10)
+        treat_card = ctk.CTkFrame(self.results_content, fg_color="#2A3A4E", corner_radius=10)
         treat_card.pack(fill="x", pady=(0, 10))
 
         ctk.CTkLabel(
-            treat_card, text="Treatment Recommendation",
-            font=ctk.CTkFont(size=11), text_color="#7A8FA8",
-        ).pack(anchor="w", padx=18, pady=(14, 4))
+            treat_card, text="💊 Treatment Recommendation",
+            font=ctk.CTkFont(size=14, weight="bold"), text_color="#FFFFFF",
+        ).pack(anchor="w", padx=18, pady=(14, 8))
+
+        # Treatment text - direct label with bright color
+        treat_value = str(result.get("Treatment_Recommendation", "Consult oncology team"))
+        if treat_value.strip() == "":
+            treat_value = "Consult oncology team"
 
         ctk.CTkLabel(
-            treat_card, text=result["Treatment_Recommendation"],
-            font=ctk.CTkFont(size=12, weight="medium"),
-            text_color=TEXT_LIGHT,
-            wraplength=300, justify="left",
+            treat_card, text=treat_value,
+            font=ctk.CTkFont(size=16, weight="bold"),
+            text_color="#00FF88",
+            wraplength=360, justify="left",
         ).pack(anchor="w", padx=18, pady=(0, 14))
 
         # ── Status ─────────────────────────────────────────────────────
@@ -806,13 +829,23 @@ class PatientAssessmentUI(ctk.CTk):
             "follow_up_days":       followup,
         }
 
-        ml_row      = convert_to_ml_format(info)
-        probability = calculate_probability(ml_row, self.model, self.scaler, self.features)
-        result      = calculate_severity(ml_row, probability)
+        try:
+            ml_row      = convert_to_ml_format(info)
+            probability = calculate_probability(ml_row, self.model, self.scaler, self.features)
+            result      = calculate_severity(ml_row, probability)
 
-        self._current_result = (info, result)
-        self._show_results(result)
-        self._save_btn.configure(state="normal")
+            print(f"[DEBUG] _on_assess result keys: {result.keys()}")
+            print(f"[DEBUG] Treatment_Recommendation in result: {'Treatment_Recommendation' in result}")
+            print(f"[DEBUG] Full result: {result}")
+
+            self._current_result = (info, result)
+            self._show_results(result)
+            self._save_btn.configure(state="normal")
+        except Exception as e:
+            import traceback
+            error_msg = f"Error during assessment:\n{str(e)}\n\n{traceback.format_exc()}"
+            print(error_msg)
+            self._show_error(error_msg)
 
     def _on_clear(self):
         self._age_var.set("")

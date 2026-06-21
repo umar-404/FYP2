@@ -11,7 +11,7 @@ import pandas as pd
 import numpy as np
 import os
 import sys
-import pickle
+import joblib
 from PIL import Image
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -182,9 +182,12 @@ class DeepLearningUI(ctk.CTk):
         try:
             data = pd.read_csv('ML_READY_DATA.csv')
             X = data.drop(columns=['target'])
-            
-            with open('trained_mlp_model.pkl', 'rb') as f:
-                pipeline = pickle.load(f)
+
+            with open('trained_rf_model.pkl', 'rb') as f:
+                pipeline = joblib.load(f)
+            print(f"[DEBUG] Model loaded successfully. Pipeline type: {type(pipeline)}")
+            print(f"[DEBUG] X shape: {X.shape}")
+            print(f"[DEBUG] Features: {list(X.columns)[:5]}...")
         except FileNotFoundError as e:
             self.output_box.insert("0.0", f"❌ Execution Failed:\nMissing serialized component: {os.path.basename(e.filename)}")
             return
@@ -195,9 +198,11 @@ class DeepLearningUI(ctk.CTk):
 
         try:
             # Draw probability using the clean MLP pipeline wrapper components
+            print(f"[DEBUG] Loading model and making prediction for patient {patient_idx}")
             prob_scores = pipeline.predict_proba(X)[:, 1]
             prob = prob_scores[patient_idx]
-            
+            print(f"[DEBUG] Probability: {prob}")
+
             # Simple thresholding logic mirroring baseline structures
             severity = "Critical Status" if prob >= 0.70 else "High Risk" if prob >= 0.50 else "Stable Profile"
             color_txt = CRITICAL_RED if prob >= 0.50 else SUCCESS_GREEN
@@ -212,7 +217,10 @@ class DeepLearningUI(ctk.CTk):
             )
             self.output_box.insert("0.0", report)
         except Exception as e:
-            self.output_box.insert("0.0", f"❌ Inference Processing Error:\n{str(e)}")
+            import traceback
+            error_details = f"❌ Inference Processing Error:\n{str(e)}\n\n{traceback.format_exc()}"
+            print(error_details)
+            self.output_box.insert("0.0", error_details)
 
     def _build_footer(self):
         footer = ctk.CTkFrame(self, height=30, fg_color=BAR_BG, corner_radius=0)

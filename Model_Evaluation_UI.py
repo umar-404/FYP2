@@ -62,8 +62,8 @@ class ModelEvaluationUI(ctk.CTk):
         super().__init__()
 
         self.title("Clinical Diagnostics Hub — Model Evaluation UI Panel")
-        self.geometry("1340x880")
-        self.minsize(1200, 780)
+        self.geometry("1600x1050")
+        self.minsize(1400, 900)
         ctk.set_appearance_mode("light")
 
         # Fixed placeholder list mirroring the heavily regularized metrics table
@@ -112,15 +112,15 @@ class ModelEvaluationUI(ctk.CTk):
         ).pack(anchor="w", padx=20, pady=(20, 10))
 
         # Core Metrics Display Table Panel Card
-        table_card = ctk.CTkScrollableFrame(panel, fg_color=CARD_BG, corner_radius=8, height=300)
+        table_card = ctk.CTkScrollableFrame(panel, fg_color=CARD_BG, corner_radius=8, height=360)
         table_card.pack(fill="x", padx=16, pady=4)
-        table_card.grid_columnconfigure((0, 1, 2), weight=1)
+        table_card.grid_columnconfigure((0, 1, 2, 3, 4), weight=1)
 
         # Header Columns
-        headers = ["Model Name", "Test Acc", "F1 Score"]
+        headers = ["Model Name", "Train Acc", "Test Acc", "Precision", "F1 Score"]
         for ci, h_text in enumerate(headers):
             ctk.CTkLabel(
-                table_card, text=h_text, font=ctk.CTkFont(size=11, weight="bold"),
+                table_card, text=h_text, font=ctk.CTkFont(size=12, weight="bold"),
                 text_color=PRIMARY_BLUE, anchor="w" if ci == 0 else "e"
             ).grid(row=0, column=ci, sticky="ew", padx=8, pady=6)
 
@@ -128,13 +128,15 @@ class ModelEvaluationUI(ctk.CTk):
         for idx, row in self.df_metrics.iterrows():
             bg_color = "#F8FAFC" if idx % 2 == 0 else CARD_BG
             row_frame = ctk.CTkFrame(table_card, fg_color=bg_color, corner_radius=4)
-            row_frame.grid(row=idx+1, column=0, columnspan=3, sticky="ew", pady=2)
+            row_frame.grid(row=idx+1, column=0, columnspan=5, sticky="ew", pady=2)
             row_frame.grid_columnconfigure(0, weight=2)
-            row_frame.grid_columnconfigure((1, 2), weight=1)
+            row_frame.grid_columnconfigure((1, 2, 3, 4), weight=1)
 
-            ctk.CTkLabel(row_frame, text=row["Model"], font=ctk.CTkFont(size=11, weight="bold"), text_color=TEXT_DARK, anchor="w").grid(row=0, column=0, sticky="ew", padx=8, pady=4)
-            ctk.CTkLabel(row_frame, text=f"{row['Test_Acc']:.2%}", font=ctk.CTkFont(size=11), text_color=TEXT_MEDIUM, anchor="e").grid(row=0, column=1, sticky="ew", padx=8, pady=4)
-            ctk.CTkLabel(row_frame, text=f"{row['F1_Score']:.2%}", font=ctk.CTkFont(size=11, weight="bold"), text_color=ACCENT_TEAL, anchor="e").grid(row=0, column=2, sticky="ew", padx=8, pady=4)
+            ctk.CTkLabel(row_frame, text=row["Model"], font=ctk.CTkFont(size=12, weight="bold"), text_color=TEXT_DARK, anchor="w").grid(row=0, column=0, sticky="ew", padx=8, pady=4)
+            ctk.CTkLabel(row_frame, text=f"{row['Train_Acc']:.2%}", font=ctk.CTkFont(size=12), text_color=TEXT_MEDIUM, anchor="e").grid(row=0, column=1, sticky="ew", padx=8, pady=4)
+            ctk.CTkLabel(row_frame, text=f"{row['Test_Acc']:.2%}", font=ctk.CTkFont(size=12), text_color=TEXT_MEDIUM, anchor="e").grid(row=0, column=2, sticky="ew", padx=8, pady=4)
+            ctk.CTkLabel(row_frame, text=f"{row['Precision']:.2%}", font=ctk.CTkFont(size=12), text_color=TEXT_MEDIUM, anchor="e").grid(row=0, column=3, sticky="ew", padx=8, pady=4)
+            ctk.CTkLabel(row_frame, text=f"{row['F1_Score']:.2%}", font=ctk.CTkFont(size=12, weight="bold"), text_color=ACCENT_TEAL, anchor="e").grid(row=0, column=4, sticky="ew", padx=8, pady=4)
 
         # Real-time Patient Evaluation Box
         self._build_patient_triage_module(panel)
@@ -165,7 +167,7 @@ class ModelEvaluationUI(ctk.CTk):
         triage_btn.pack(fill="x", padx=16, pady=(4, 12))
 
         # Log Output Box
-        self.output_box = ctk.CTkTextbox(triage_card, height=180, font=ctk.CTkFont(family="monospace", size=11), fg_color="#F8FAFC", border_width=1, border_color=BAR_BG)
+        self.output_box = ctk.CTkTextbox(triage_card, height=240, font=ctk.CTkFont(family="monospace", size=11), fg_color="#F8FAFC", border_width=1, border_color=BAR_BG)
         self.output_box.pack(fill="x", padx=16, pady=(0, 16))
         self.output_box.insert("0.0", "System idle. Enter a patient index to compute live severity engine variables...")
 
@@ -179,10 +181,10 @@ class ModelEvaluationUI(ctk.CTk):
         self.tab_view.add("Precision-Recall Tradeoff")
         self.tab_view.add("Predictive Feature Importance")
 
-        self._render_image_in_tab("Confusion Matrices", IMAGE_PATHS["cm"], (740, 480))
-        self._render_image_in_tab("Generalization Check", IMAGE_PATHS["gap"], (740, 440))
-        self._render_image_in_tab("Precision-Recall Tradeoff", IMAGE_PATHS["pr"], (700, 480))
-        self._render_image_in_tab("Predictive Feature Importance", IMAGE_PATHS["feat"], (740, 480))
+        self._render_image_in_tab("Confusion Matrices", IMAGE_PATHS["cm"], (900, 620))
+        self._render_image_in_tab("Generalization Check", IMAGE_PATHS["gap"], (900, 580))
+        self._render_image_in_tab("Precision-Recall Tradeoff", IMAGE_PATHS["pr"], (900, 620))
+        self._render_image_in_tab("Predictive Feature Importance", IMAGE_PATHS["feat"], (900, 620))
 
     def _render_image_in_tab(self, tab_name, image_path, size):
         target_tab = self.tab_view.tab(tab_name)
@@ -253,10 +255,40 @@ class ModelEvaluationUI(ctk.CTk):
                 patient_index=patient_idx
             )
             
-            self.output_box.insert("0.0", str(result))
-            
+            self.output_box.insert("0.0", self._format_severity_result(result))
+
         except Exception as e:
-            self.output_box.insert("0.0", f"❌ Inference Engine Core Exception:\n{str(e)}")
+            import traceback
+            self.output_box.insert("0.0", f"❌ Inference Engine Core Exception:\n{str(e)}\n\n{traceback.format_exc()}")
+
+    def _format_severity_result(self, result):
+        """Format severity engine result into readable output."""
+        try:
+            if not isinstance(result, dict):
+                return str(result)
+
+            lines = [
+                "=" * 50,
+                "        PATIENT SEVERITY EVALUATION REPORT",
+                "=" * 50,
+                "",
+                f"  Patient Index     : {result.get('Patient_Index', 'N/A')}",
+                f"  Cancer Probability: {result.get('Cancer_Probability', 'N/A')}",
+                f"  Base Level        : {result.get('Base_Level', 'N/A')}",
+                f"  Severity Level    : {result.get('Severity_Level', 'N/A')}",
+                "",
+                f"  Adjustment Notes:",
+                f"  {result.get('Adjustment', 'N/A')}",
+                "",
+                f"  Treatment Recommendation:",
+                f"  {result.get('Treatment_Recommendation', 'N/A')}",
+                "",
+                "=" * 50,
+            ]
+            return "\n".join(lines)
+        except Exception as e:
+            import traceback
+            return f"Error formatting result: {e}\n\nRaw result:\n{result}\n\n{traceback.format_exc()}"
 
     def _build_footer(self):
         footer = ctk.CTkFrame(self, height=30, fg_color="#DDE3EA", corner_radius=0)
